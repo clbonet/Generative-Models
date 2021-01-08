@@ -76,52 +76,63 @@ class Scale(BaseNormalizingFlow):
     
     def backward(self, z):
         return torch.exp(-self.log_s)*z, -torch.sum(self.log_s, dim=1)
-
-
+        
+        
 class AffineCoupling(BaseNormalizingFlow):
     """
         RealNVP
     """
-    def __init__(self, scaling, shifting, parity):
+    def __init__(self, scaling, shifting, d):
         super().__init__()
         self.scaling = scaling
         self.shifting = shifting
-        self.parity = parity
+        self.k = d//2
 
     def forward(self, x):
-        x0, x1 = x[:,::2], x[:,1::2]
+        x0, x1 = x[:,:self.k], x[:,self.k:]
 
-        if self.parity:
-            s = self.scaling(x1)
-            t = self.shifting(x1)
-            z0 = torch.exp(s)*x0+t
-            z1 = x1
-        else:
-            s = self.scaling(x0)
-            t = self.shifting(x0)
-            z0 = x0
-            z1 = torch.exp(s)*x1+t
+        s = self.scaling(x0)
+        t = self.shifting(x0)
+        z0 = x0
+        z1 = torch.exp(s)*x1+t
 
         z = torch.cat([z0,z1], dim=1)
         return z, torch.sum(s, dim=1)
 
 
     def backward(self, z):
-        z0, z1 = z[:,::2], z[:,1::2]
+        z0, z1 = z[:,:self.k], z[:,self.k:]
 
-        if self.parity:
-            s = self.scaling(z1)
-            t = self.shifting(z1)
-            x0 = torch.exp(-s)*(z0-t)
-            x1 = z1
-        else:
-            s = self.scaling(z0)
-            t = self.shifting(z0)
-            x0 = z0
-            x1 = torch.exp(-s)*(z1-t)
+        s = self.scaling(z0)
+        t = self.shifting(z0)
+        x0 = z0
+        x1 = torch.exp(-s)*(z1-t)
         
         x = torch.cat([x0,x1], dim=1)
         return x, -torch.sum(s, dim=1)
+        
+
+class Reverse(BaseNormalizingFlow):
+    """
+        Ref: https://github.com/acids-ircam/pytorch_flows/blob/master/flows_04.ipynb
+    """
+    def __init__(self, d):
+        super().__init__()
+        self.permute = torch.arange(d-1,-1,-1)
+        self.inverse = torch.argsort(self.permute)
+        
+    def forward(self, x):
+        return x[:, self.permute], torch.zeros(x.size(0),device=device)
+
+    def backward(self, z):
+        return z[:, self.inverse], torch.zeros(z.size(0),device=device)
+
+
+class Shuffle(Reverse):
+    def __init__(self, d):
+        super().__init__(d)
+        self.permute = torch.randperm(d)
+        self.inverse = torch.argsort(self.permute)
         
 
 class BatchNorm(BaseNormalizingFlow):
