@@ -29,36 +29,28 @@ class AdditiveCoupling(BaseNormalizingFlow):
     """
         NICE
     """
-    def __init__(self, coupling, parity):
+    def __init__(self, coupling, d):
         super().__init__()
-        self.parity = parity
+        self.k = d//2
         self.coupling = coupling
         
     def forward(self, x):
-        x0, x1 = x[:,::2], x[:,1::2]
-        if self.parity:
-            m = self.coupling(x1)
-            z0 = x0+m
-            z1 = x1
-        else:
-            m = self.coupling(x0)
-            z0 = x0
-            z1 = x1+m
+        x0, x1 = x[:,:self.k], x[:,self.k:]
+        
+        m = self.coupling(x0)
+        z0 = x0
+        z1 = x1+m
             
         z = torch.cat([z0,z1], dim=1)
         return z,torch.zeros(x.shape[0],device=device)
     
     def backward(self, z):
-        z0, z1 = z[:,::2], z[:,1::2]
-        if self.parity:
-            m = self.coupling(z1)
-            x0 = z0-m
-            x1 = z1
-        else:
-            m = self.coupling(z0)
-            x0 = z0
-            x1 = z1-m
-            
+        z0, z1 = z[:,:self.k], z[:,self.k:]
+
+        m = self.coupling(z0)
+        x0 = z0
+        x1 = z1-m
+
         x = torch.cat([x0,x1], dim=1)
         return x, torch.zeros(z.shape[0],device=device)
 
@@ -242,6 +234,55 @@ class PlanarFlow(BaseNormalizingFlow):
     def backward(self, z):
         ## can't compute it analytically
         return NotImplementedError
+    
+    
+class AffineConstantFlow(BaseNormalizingFlow):
+    """ 
+    Scales + Shifts the flow by (learned) constants per dimension.
+    In NICE paper there is a Scaling layer which is a special case of this where t is None
+
+    https://github.com/karpathy/pytorch-normalizing-flows/blob/master/nflib/flows.py
+    """
+    def __init__(self, dim, scale=True, shift=True):
+        super().__init__()
+        self.s = nn.Parameter(torch.randn(1, dim, requires_grad=True)) if scale else None
+        self.t = nn.Parameter(torch.randn(1, dim, requires_grad=True)) if shift else None
+        
+    def forward(self, x):
+        s = self.s if self.s is not None else x.new_zeros(x.size())
+        t = self.t if self.t is not None else x.new_zeros(x.size())
+        z = x * torch.exp(s) + t
+        log_det = torch.sum(s, dim=1)
+        return z, log_det
+    
+    def backward(self, z):
+        s = self.s if self.s is not None else z.new_zeros(z.size())
+        t = self.t if self.t is not None else z.new_zeros(z.size())
+        x = (z - t) * torch.exp(-s)
+        log_det = torch.sum(-s, dim=1)
+        return x, log_det
+
+
+class ActNorm(AffineConstantFlow):
+    """
+    Really an AffineConstantFlow but with a data-dependent initialization,
+    where on the very first batch we clever initialize the s,t so that the output
+    is unit gaussian. As described in Glow paper.
+
+    https://github.com/karpathy/pytorch-normalizing-flows/blob/master/nflib/flows.py
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.data_dep_init_done = False
+    
+    def forward(self, x):
+        # first batch is used for init
+        if not self.data_dep_init_done:
+            assert self.s is not None and self.t is not None # for now
+            self.s.data = (-torch.log(x.std(dim=0, keepdim=True))).detach()
+            self.t.data = (-(x * torch.exp(self.s)).mean(dim=0, keepdim=True)).detach()
+            self.data_dep_init_done = True
+        return super().forward(x)
         
 
 class NormalizingFlows(BaseNormalizingFlow):
