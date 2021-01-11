@@ -4,12 +4,12 @@
 - Real NVP
 - Glow
 - Planar Flow
+- Radial Flow
 
 
 To Do:
 - Flow++
 - Deep Dense Sigmoidal Flow
-- Radial Flow (with VAE)
 - Sylvester Flow (with VAE)
 - Convex Potential Flow
 - ResFlow/IRes
