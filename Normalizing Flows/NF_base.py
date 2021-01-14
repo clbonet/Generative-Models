@@ -248,7 +248,7 @@ class RadialFlow(BaseNormalizingFlow):
         self.z0 = nn.Parameter(torch.randn(d, requires_grad=True))   
 
     def forward(self, x):
-        r = torch.norm(x-self.z0,dim=-1,keepdim=True) # torch.sqrt(torch.sum(x-self.z0)**2)
+        r = torch.norm(x-self.z0,dim=-1,keepdim=True)
 
         alpha = torch.exp(self.log_alpha)
         h = 1/(alpha+r)
