@@ -6,7 +6,7 @@
 - Planar Flow
 - Radial Flow
 - Neural Spline Flow
-
+- Masked Autoregressive Flow (need MADE)
 
 To Do:
 - Flow++
@@ -14,5 +14,4 @@ To Do:
 - Sylvester Flow (with VAE)
 - Convex Potential Flow
 - ResFlow/IRes
-- Masked Autoregressive Flow (need MADE)
 
