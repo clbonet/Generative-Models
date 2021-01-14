@@ -5,6 +5,7 @@
 - Glow
 - Planar Flow
 - Radial Flow
+- Neural Spline Flow
 
 
 To Do:
@@ -13,6 +14,5 @@ To Do:
 - Sylvester Flow (with VAE)
 - Convex Potential Flow
 - ResFlow/IRes
-- Neural Spline Flow
 - Masked Autoregressive Flow (need MADE)
 
