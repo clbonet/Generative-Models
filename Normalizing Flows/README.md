@@ -15,3 +15,6 @@ To Do:
 - Convex Potential Flow
 - ResFlow/IRes
 
+Investigate:
+- cpu memory leak in train_mnist?
+
