@@ -40,34 +40,24 @@ class AdditiveCoupling(BaseNormalizingFlow):
         self.coupling = coupling
 
     def forward(self, x):
-    	"""
-    		Outputs:
-    		- output coupling layer
-    		- log determinant of the Jacobian
-    	"""
-        x0, x1 = x[:, :self.k], x[:, self.k:]
+        x0, x1 = x[:,:self.k], x[:,self.k:]
         
         m = self.coupling(x0)
         z0 = x0
         z1 = x1+m
-
-        z = torch.cat([z0, z1], dim=1)
-        return z, torch.zeros(x.shape[0], device=device)
-
+            
+        z = torch.cat([z0,z1], dim=1)
+        return z,torch.zeros(x.shape[0],device=device)
+    
     def backward(self, z):
-    	"""
-    		Outputs:
-    		- output inverse coupling layer
-    		- log determinant of the Jacobian
-    	"""
-        z0, z1 = z[:, :self.k], z[:, self.k:]
+        z0, z1 = z[:,:self.k], z[:,self.k:]
 
         m = self.coupling(z0)
         x0 = z0
         x1 = z1-m
 
-        x = torch.cat([x0, x1], dim=1)
-        return x, torch.zeros(z.shape[0], device=device)
+        x = torch.cat([x0,x1], dim=1)
+        return x, torch.zeros(z.shape[0],device=device)
 
 
 class Scale(BaseNormalizingFlow):
@@ -83,19 +73,9 @@ class Scale(BaseNormalizingFlow):
         self.log_s = nn.Parameter(torch.randn(1, dim, requires_grad=True))
 
     def forward(self, x):
-    """
-    	Outputs:
-    	- z = x*s
-    	- log determinant of the jacobian: \sum_i \log s_i
-    """
         return torch.exp(self.log_s)*x, torch.sum(self.log_s, dim=1)
-
+    
     def backward(self, z):
-    """
-    	Outputs:
-    	- x = z/s
-    	- log determinant of the jacobian: -\sum_i \log s_i
-    """
         return torch.exp(-self.log_s)*z, -torch.sum(self.log_s, dim=1)
 
 
@@ -114,37 +94,27 @@ class AffineCoupling(BaseNormalizingFlow):
         self.k = dim//2
 
     def forward(self, x):
-    	"""
-    		Outputs:
-    		- output coupling layer
-    		- log determinant of the Jacobian
-    	"""
-        x0, x1 = x[:, :self.k], x[:, self.k:]
+        x0, x1 = x[:,:self.k], x[:,self.k:]
 
         s = self.scaling(x0)
         t = self.shifting(x0)
         z0 = x0
         z1 = torch.exp(s)*x1+t
 
-        z = torch.cat([z0, z1], dim=1)
+        z = torch.cat([z0,z1], dim=1)
         return z, torch.sum(s, dim=1)
 
+
     def backward(self, z):
-    	"""
-    		Outputs:
-    		- output inverse coupling layer
-    		- log determinant of the Jacobian
-    	"""
-        z0, z1 = z[:, :self.k], z[:, self.k:]
+        z0, z1 = z[:,:self.k], z[:,self.k:]
 
         s = self.scaling(z0)
         t = self.shifting(z0)
         x0 = z0
         x1 = torch.exp(-s)*(z1-t)
-
-        x = torch.cat([x0, x1], dim=1)
+        
+        x = torch.cat([x0,x1], dim=1)
         return x, -torch.sum(s, dim=1)
-
 
 class Reverse(BaseNormalizingFlow):
     """
@@ -167,12 +137,12 @@ class Reverse(BaseNormalizingFlow):
 
 
 class Shuffle(Reverse):
-	"""
-		Apply a random permutation of the indices
-	"""
-    def __init__(self, dim):
-        super().__init__(dim)
-        self.permute = torch.randperm(dim)
+    """
+        Apply a random permutation of the indices
+    """
+    def __init__(self, d):
+        super().__init__(d)
+        self.permute = torch.randperm(d)
         self.inverse = torch.argsort(self.permute)
         
 
@@ -381,7 +351,7 @@ class NormalizingFlows(BaseNormalizingFlow):
         - https://github.com/karpathy/pytorch-normalizing-flows/blob/master/nflib/flows.py
     """
     def __init__(self, flows):
-    	"""
+        """
     		Inputs:
     		- flows: list of BaseNormalizingFlows objects
     	"""

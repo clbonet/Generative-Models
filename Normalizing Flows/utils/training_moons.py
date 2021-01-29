@@ -9,16 +9,22 @@ from torch.distributions.transforms import SigmoidTransform
 from tqdm.auto import trange
 
 
-def loss(h,log_det,base_distr):
-    prior = base_distr.log_prob(h).mean()
+def loss(h,log_det,distr,base_distr="normal"):
+    if base_distr == "logistic":
+        prior = distr.log_prob(h).sum(1).mean(0)
+    else:
+        prior = distr.log_prob(h).mean()
     return -(prior+log_det.mean())
 
-def log_likelihood(h,log_det,base_distr):
-    prior = base_distr.log_prob(h)
+def log_likelihood(h,log_det,distr,base_distr="normal"):
+    if base_distr == "logistic":
+        prior = distr.log_prob(h).sum(1)
+    else:
+        prior = distr.log_prob(h)
     return prior+log_det
     
 
-def val_moons(model, base_distr, i, device):
+def val_moons(model, distr, i, device, base_distr="normal"):
     model.eval()
 
     xline = torch.linspace(-1.5, 2.5, 100)
@@ -28,10 +34,10 @@ def val_moons(model, base_distr, i, device):
 
     with torch.no_grad():
         xy, log_s = model(xyinput.to(device))
-        zz = (log_likelihood(xy[-1],log_s,base_distr)).exp().cpu()
+        zz = (log_likelihood(xy[-1],log_s,distr,base_distr)).exp().cpu()
         zgrid = zz.reshape(100,100)
 
-        z = base_distr.sample((100,))
+        z = distr.sample((100,))
         xs, _ = model.backward(z)
         x = xs[-1].detach()
         x = x.cpu().numpy()
@@ -55,10 +61,10 @@ def train_moons(model, optimizer, n_epochs=10001, base_distr="normal",
         device = "cuda" if torch.cuda.is_available() else "cpu"
     
     if base_distr == "normal":
-        base_distr = torch.distributions.multivariate_normal.MultivariateNormal(
+        distr = torch.distributions.multivariate_normal.MultivariateNormal(
             torch.zeros(d,device=device),torch.eye(d,device=device))
     elif base_distr == "logistic":
-	    base_distr = TransformedDistribution(Uniform(torch.zeros(d, device=device),
+	    distr = TransformedDistribution(Uniform(torch.zeros(d, device=device),
            torch.ones(d, device=device)), SigmoidTransform().inv)
     else:
         raise ValueError("wrong base distribution")
@@ -74,7 +80,7 @@ def train_moons(model, optimizer, n_epochs=10001, base_distr="normal",
         model.train()
 
         z, log_det = model(x)
-        l = loss(z[-1],log_det,base_distr)
+        l = loss(z[-1],log_det,distr,base_distr)
 
         l.backward()
         optimizer.step()
@@ -87,6 +93,6 @@ def train_moons(model, optimizer, n_epochs=10001, base_distr="normal",
 
         if plot_val and i % plot_interval == 0:
             print(i,train_loss[-1])
-            val_moons(model, base_distr, i, device)
+            val_moons(model, distr, i, device, base_distr)
             
     return train_loss
