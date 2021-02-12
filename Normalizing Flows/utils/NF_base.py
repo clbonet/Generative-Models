@@ -57,7 +57,7 @@ class AdditiveCoupling(BaseNormalizingFlow):
         x1 = z1-m
 
         x = torch.cat([x0,x1], dim=1)
-        return x, torch.zeros(z.shape[0],device=device)
+        return x #, torch.zeros(z.shape[0],device=device)
 
 
 class Scale(BaseNormalizingFlow):
@@ -76,7 +76,7 @@ class Scale(BaseNormalizingFlow):
         return torch.exp(self.log_s)*x, torch.sum(self.log_s, dim=1)
     
     def backward(self, z):
-        return torch.exp(-self.log_s)*z, -torch.sum(self.log_s, dim=1)
+        return torch.exp(-self.log_s)*z #, -torch.sum(self.log_s, dim=1)
 
 
 class AffineCoupling(BaseNormalizingFlow):
@@ -114,7 +114,7 @@ class AffineCoupling(BaseNormalizingFlow):
         x1 = torch.exp(-s)*(z1-t)
         
         x = torch.cat([x0,x1], dim=1)
-        return x, -torch.sum(s, dim=1)
+        return x #, -torch.sum(s, dim=1)
 
 class Reverse(BaseNormalizingFlow):
     """
@@ -133,7 +133,7 @@ class Reverse(BaseNormalizingFlow):
         return x[:, self.permute], torch.zeros(x.size(0), device=device)
 
     def backward(self, z):
-        return z[:, self.inverse], torch.zeros(z.size(0), device=device)
+        return z[:, self.inverse] #, torch.zeros(z.size(0), device=device)
 
 
 class Shuffle(Reverse):
@@ -194,7 +194,7 @@ class BatchNorm(BaseNormalizingFlow):
 
         x = (z-self.beta)*torch.exp(-self.gamma)*var.sqrt()+mean
         log_det = torch.sum(-self.gamma+torch.log(var))
-        return x, log_det
+        return x #, log_det
         
         
 class LUInvertible(BaseNormalizingFlow):
@@ -232,7 +232,7 @@ class LUInvertible(BaseNormalizingFlow):
         L = torch.tril(self.L,-1)+torch.diag(torch.ones(self.dim, device=device))
         U = torch.triu(self.U,1)+torch.diag(self.S)
         W = P @ L @ U
-        return z@torch.inverse(W), -torch.sum(torch.log(torch.abs(self.S)))
+        return z@torch.inverse(W) #, -torch.sum(torch.log(torch.abs(self.S)))
 
 
 class PlanarFlow(BaseNormalizingFlow):
@@ -316,7 +316,7 @@ class AffineConstantFlow(BaseNormalizingFlow):
         t = self.t if self.t is not None else z.new_zeros(z.size())
         x = (z - t) * torch.exp(-s)
         log_det = torch.sum(-s, dim=1)
-        return x, log_det
+        return x #, log_det
 
 
 class ActNorm(AffineConstantFlow):
@@ -371,8 +371,8 @@ class NormalizingFlows(BaseNormalizingFlow):
         log_det = torch.zeros(z.shape[0], device=device)
         xs = [z]
         for flow in self.flows[::-1]:
-            z, log_det_i = flow.backward(z)
-            log_det += log_det_i
+            z = flow.backward(z)
+#             log_det += log_det_i
             xs.append(z)
-        return xs, log_det
+        return xs #, log_det
         

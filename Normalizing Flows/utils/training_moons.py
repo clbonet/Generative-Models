@@ -38,7 +38,7 @@ def val_moons(model, distr, i, device, base_distr="normal"):
         zgrid = zz.reshape(100,100)
 
         z = distr.sample((100,))
-        xs, _ = model.backward(z)
+        xs = model.backward(z)
         x = xs[-1].detach()
         x = x.cpu().numpy()
         z = z.cpu().numpy()
@@ -68,7 +68,7 @@ def val_moons_grad(model, distr, i, device, base_distr="normal"):
 	    zgrid = zz.reshape(100,100)
 
 	    z = distr.sample((100,))
-	    xs, _ = model.backward(z)
+	    xs = model.backward(z)
 	    x = xs[-1].detach()
 	    x = x.cpu().numpy()
 	    z = z.detach().cpu().numpy()

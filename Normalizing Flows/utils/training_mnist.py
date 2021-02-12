@@ -34,7 +34,7 @@ def val_mnist(model, device):
     r,c = 5,5
     z_random = torch.randn(r,c,d,device=device)
     model.eval()
-    zs,log_det = model.backward(z_random.reshape(-1,28*28))
+    zs = model.backward(z_random.reshape(-1,28*28))
     gen_imgs = inverse_logit(zs[-1].view(-1,28,28).detach().cpu())
 
     cpt = 0
