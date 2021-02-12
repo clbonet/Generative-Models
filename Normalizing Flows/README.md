@@ -13,8 +13,9 @@ To Do:
 - Deep Dense Sigmoidal Flow
 - Sylvester Flow (with VAE)
 - Convex Potential Flow
-- ResFlow/IRes
+- ResFlow/IRes (problem with estimation gradient)
 
 Investigate:
 - cpu memory leak in train_mnist?
+- IAF: error (out of [0,1]?)
 
