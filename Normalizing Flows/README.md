@@ -6,10 +6,10 @@
 - Planar Flow
 - Radial Flow
 - Neural Spline Flow
-- Masked Autoregressive Flow (need MADE)
+- Masked Autoregressive Flow (with MADE)
+- Flow++
 
 To Do:
-- Flow++
 - Deep Dense Sigmoidal Flow
 - Sylvester Flow (with VAE)
 - Convex Potential Flow
@@ -18,4 +18,4 @@ To Do:
 Investigate:
 - cpu memory leak in train_mnist?
 - IAF: error (out of [0,1]?)
-
+- Flow++: on Mnist, problem with likelihood. (problem with dims in log_det???)
