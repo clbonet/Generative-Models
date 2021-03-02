@@ -87,10 +87,9 @@ def val_moons_grad(model, distr, i, device, base_distr="normal"):
     plt.show()    
 
 
-def train_moons(model, optimizer, n_epochs=10001, base_distr="normal", 
+def train_moons(model, optimizer, n_epochs=10001, base_distr="normal", d=2, 
 				device=None, plot_val=True, plot_interval=1000,
                 input_grad=False):
-    d = 2
     
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
