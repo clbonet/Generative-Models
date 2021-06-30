@@ -33,16 +33,15 @@ def val_likelihood(model, distr, i, device, base_distr="normal"):
     xgrid, ygrid = torch.meshgrid(xline, yline)
     xyinput = torch.cat([xgrid.reshape(-1, 1), ygrid.reshape(-1, 1)], dim=1)
 
-    with torch.no_grad():
-        xy, log_s = model(xyinput.to(device))
-        zz = (log_likelihood(xy[-1],log_s,distr,base_distr)).exp().cpu()
-        zgrid = zz.reshape(100,100)
+    xy, log_s = model(xyinput.to(device))
+    zz = (log_likelihood(xy[-1],log_s,distr,base_distr)).exp().cpu()
+    zgrid = zz.reshape(100,100)
 
-        z = distr.sample((100,))
-        xs = model.backward(z)
-        x = xs[-1].detach()
-        x = x.cpu().numpy()
-        z = z.cpu().numpy()
+    z = distr.sample((100,))
+    xs = model.backward(z)
+    x = xs[-1].detach()
+    x = x.cpu().numpy()
+    z = z.cpu().numpy()
 
     plt.contourf(xgrid.numpy(), ygrid.numpy(), zgrid.numpy())
     plt.colorbar()

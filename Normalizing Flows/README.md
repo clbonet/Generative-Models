@@ -1,7 +1,7 @@
 # Normalizing Flows
 
 - NICE
-- Real NVP
+- Real Non Volume Preserving (RealNVP)
 - Glow
 - Planar Flow
 - Radial Flow
@@ -9,11 +9,12 @@
 - Masked Autoregressive Flow (with MADE)
 - Flow++
 - Dynamic Linear FLow
+- Convex Potential Flow (with Quadratic Dense ICNN)
+- Block Neural Autoregressive Flow (BNAF)
 
 To Do:
 - Deep Dense Sigmoidal Flow
 - Sylvester Flow (with VAE)
-- Convex Potential Flow
 - ResFlow/IRes (problem with estimation gradient)
 
 Investigate:
