@@ -193,7 +193,7 @@ class BatchNorm(BaseNormalizingFlow):
             var = self.train_var
 
         x = (z-self.beta)*torch.exp(-self.gamma)*var.sqrt()+mean
-        log_det = torch.sum(-self.gamma+torch.log(var))
+        log_det = torch.sum(-self.gamma+0.5*torch.log(var))
         return x #, log_det
         
         
