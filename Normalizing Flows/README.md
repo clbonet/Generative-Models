@@ -12,6 +12,10 @@
 - Convex Potential Flow (with Quadratic Dense ICNN)
 - Block Neural Autoregressive Flow (BNAF)
 
+On the Sphere:
+- Radial Exponential map
+
+
 To Do:
 - Deep Dense Sigmoidal Flow
 - Sylvester Flow (with VAE)
